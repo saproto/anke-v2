@@ -1,27 +1,23 @@
 package nl.saproto.anke;
 
-import android.content.Context;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.widget.Toast;
+
+import net.openid.appauth.AuthState;
+import net.openid.appauth.AuthorizationRequest;
+import net.openid.appauth.AuthorizationService;
+import net.openid.appauth.AuthorizationServiceConfiguration;
+import net.openid.appauth.ResponseTypeValues;
 
 public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Catch incoming OAuth2 response
-        Intent intent = getIntent();
-        Uri data = intent.getData();
-
-        if (data != null) {
-            this.finishOauthFlow(data);
-        } else {
-            this.startOauthFlow();
-        }
+        this.startOauthFlow();
     }
 
     protected void startOauthFlow() {
@@ -29,23 +25,26 @@ public class LoginActivity extends AppCompatActivity {
         // Feedback for the user
         HelperProvider.showToast(getApplicationContext(), "Redirecting to the S.A. Proto website for authentication...");
 
-        // Open webview for OAuth2
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(ApiProvider.getOauthPath()));
-        startActivity(browserIntent);
+        // Starting OAuth flow
+        AuthorizationServiceConfiguration serviceConfiguration =
+                new AuthorizationServiceConfiguration(
+                        Uri.parse("https://www.proto.utwente.nl/oauth/authorize"),
+                        Uri.parse("https://www.proto.utwente.nl/oauth/token"));
 
-    }
+        HelperProvider.writeAuthState(getApplicationContext(), new AuthState(serviceConfiguration));
 
-    protected void finishOauthFlow(Uri callbackData) {
+        AuthorizationRequest.Builder authRequestBuilder =
+                new AuthorizationRequest.Builder(
+                        serviceConfiguration,
+                        "2",
+                        ResponseTypeValues.CODE,
+                        Uri.parse("saproto://oauth_callback"));
 
-        // Feedback for the user
-        HelperProvider.showToast(getApplicationContext(), "Processing authentication response...");
+        AuthorizationService authorizationService = new AuthorizationService(this);
 
-        // Test and save credentials
-        String token = callbackData.toString().replace("saproto://oauth_callback?code=", "");
-        ApiProvider.saveOauthToken(getApplicationContext(), token);
-
-        // Return to main activity
-        finish();
+        authorizationService.performAuthorizationRequest(authRequestBuilder.build(),
+                PendingIntent.getActivity(this, 0, new Intent(this, LoginCompleteActivity.class), 0),
+                PendingIntent.getActivity(this, 0, new Intent(this, LoginCompleteActivity.class), 0));
 
     }
 
