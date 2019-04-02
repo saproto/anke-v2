@@ -1,10 +1,7 @@
 package nl.saproto.anke;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.Snackbar;
 
 import android.widget.Toast;
 
