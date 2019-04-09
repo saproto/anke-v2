@@ -10,6 +10,9 @@ import com.loopj.android.http.JsonHttpResponseHandler;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import cz.msebera.android.httpclient.Header;
 import nl.saproto.anke.Database.AppDatabase;
 import nl.saproto.anke.Database.User;
@@ -20,7 +23,6 @@ public class LoginActivity extends OAuthLoginActivity<ProtoClient> {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
     }
 
     @Override
@@ -31,13 +33,19 @@ public class LoginActivity extends OAuthLoginActivity<ProtoClient> {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject json) {
                 try {
-                    AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
+                    final AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
 
-                    User user = new User();
+                    final User user = new User();
                     user.calling_name = json.getString("calling_name");
                     user.name = json.getString("name");
 
-                    db.userModel().insertUser(user);
+                    Executor myExecutor = Executors.newSingleThreadExecutor();
+                    myExecutor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            db.userModel().insertUser(user);
+                        }
+                    });
 
                     HelperProvider.showToast(getApplicationContext(), "Authentication successful.");
                 } catch (JSONException e) {
