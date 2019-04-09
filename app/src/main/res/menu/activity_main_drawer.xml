@@ -8,7 +8,7 @@
         <item
             android:id="@+id/nav_login"
             android:title="Authenticate" />
-        
+
         <item android:title="Item" />
 
         <!-- TODO: Remove if no longer needed -->
